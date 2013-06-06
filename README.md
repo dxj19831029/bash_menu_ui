@@ -1,0 +1,1 @@
+example is inside script
