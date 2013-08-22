@@ -3,6 +3,9 @@
 MENU_OPTIONS=()
 M_SELECTED=()
 M_SELECTED_INDEX=()
+M_IS_INIT=false
+# contains true/false for each option
+MENU_SELECTED=()
 LM=0
 TITLE="BASH SELECTION MENU                        "
 TOP_LANE=1
@@ -28,25 +31,25 @@ UNMARK(){ $e "\033[27m";}
 BLUE(){ $e ; };BLUE
 C(){ CLEAR;BLUE;}
 HEAD(){ 
-	TOTAL_BORDER=$(( $LM + 4 ))
+    TOTAL_BORDER=$(( $LM + 4 ))
   if test "$IS_DEBUG" = "yes" ; then 
     TPUT 0 0 
     printf "total: $TOTAL_LINES show: $SHOW_LINES LM: $LM i: $i current top: $CURRENT_LANE l opt index: $L_OPT_INDEX"
   fi
-	MARK;TPUT $TOP_LANE 4
-	EMPTY1="                         "
-	EMPTY2="                         "
-	$E "`printf "%s %s %s" "${EMPTY1:$(( ${#TITLE} / 2 ))}" "$TITLE" "${EMPTY2:$(( ${#TITLE} / 2 ))}"`";UNMARK
-	DRAW
-	for each in $(seq 1 $TOTAL_BORDER);do
-		$E "   x                                                  x"
-	done;WRITE;}
+    MARK;TPUT $TOP_LANE 4
+    EMPTY1="                         "
+    EMPTY2="                         "
+    $E "`printf "%s %s %s" "${EMPTY1:$(( ${#TITLE} / 2 ))}" "$TITLE" "${EMPTY2:$(( ${#TITLE} / 2 ))}"`";UNMARK
+    DRAW
+    for each in $(seq 1 $TOTAL_BORDER);do
+        $E "   x                                                  x"
+    done;WRITE;}
 i=0; CLEAR; CIVIS;NULL=/dev/null
 FOOT(){ MARK;end_foot=$(( $LM + 4 + $TOP_LANE )) ; TPUT $end_foot 4
   if test "$IS_MULTI_SELECT" != "false" ; then
-	  printf " ENTER=FINISH, UP/DN=NEXT OPTION, S=select/deselect ";UNMARK;
+      printf " ENTER=FINISH, UP/DN=NEXT OPTION, S=select/deselect ";UNMARK;
   else
-	  printf "      ENTER=SELECT, UP/DN=NEXT OPTION               ";UNMARK;
+      printf "      ENTER=SELECT, UP/DN=NEXT OPTION               ";UNMARK;
   fi
   }
 ARROW(){ 
@@ -60,8 +63,8 @@ ARROW(){
     if [[ $key = '' ]] ; then break; fi
     if test "$key" != "$ESC" ; then continue; fi
     read -s -n2 key2 2>/dev/null >&2
-	  if [[ $key2 = [A ]];then echo up; break; fi
-	  if [[ $key2 = [B ]];then echo dn; break; fi;
+      if [[ $key2 = [A ]];then echo up; break; fi
+      if [[ $key2 = [B ]];then echo dn; break; fi;
   done
   }
 POSITION(){ 
@@ -76,12 +79,12 @@ POSITION(){
      return 0
   fi
   if [[ $cur = up ]];then ((i--));fi
-	if [[ $cur = dn ]];then ((i++));fi
+    if [[ $cur = dn ]];then ((i++));fi
   if [[ i -lt 0 ]]; then ((CURRENT_LANE--)); INITN;fi
   if [[ i -gt LM ]]; then ((CURRENT_LANE++));INITN;fi
-	if [[ i -lt 0 && CURRENT_LANE -lt 0  ]];then i=$LM; CURRENT_LANE=$(( $TOTAL_LINES - $LM )); INITN;fi
+    if [[ i -lt 0 && CURRENT_LANE -lt 0  ]];then i=$LM; CURRENT_LANE=$(( $TOTAL_LINES - $LM )); INITN;fi
   VIEW_REGION=$(( $CURRENT_LANE + $SHOW_LINES ))
-	if [[ i -gt LM && VIEW_REGION -gt TOTAL_LINES ]];then i=0; CURRENT_LANE=0 ; INITN;fi;
+    if [[ i -gt LM && VIEW_REGION -gt TOTAL_LINES ]];then i=0; CURRENT_LANE=0 ; INITN;fi;
   if [[ i -gt LM ]] ; then i=$LM;INITN ; fi;
   if [[ i -lt 0 ]] ; then i=0;INITN; fi;
   #if test "$IS_DEBUG" = "yes" ; then 
@@ -90,17 +93,17 @@ POSITION(){
   #fi
 }
 REFRESH(){ after=$((i+1)); before=$((i-1))
-	if [[ $before -lt 0  ]];then before=$LM;fi
-	if [[ $after -gt $LM ]];then after=0;fi
-	if [[ $j -lt $i      ]];then UNMARK;MN "$before";else UNMARK;MN "$after";fi
-	if [[ $after -eq 0   ]] || [[ $before -eq $LM ]];then
+    if [[ $before -lt 0  ]];then before=$LM;fi
+    if [[ $after -gt $LM ]];then after=0;fi
+    if [[ $j -lt $i      ]];then UNMARK;MN "$before";else UNMARK;MN "$after";fi
+    if [[ $after -eq 0   ]] || [[ $before -eq $LM ]];then
     UNMARK; MN "$before"; MN "$after";
   fi;
   j=$i;UNMARK;MN "$before" ; MN "$after";
 }
 MN(){ 
     line=$(( $1  + 1 + $TOP_LANE )); 
-		TPUT "$line" 5 ; 
+        TPUT "$line" 5 ; 
     L_OPT_INDEX=$(( $1 + $CURRENT_LANE ))
     l_select=${M_SELECTED[$L_OPT_INDEX]}
     empty_str=" "
@@ -111,37 +114,37 @@ MN(){
       else 
         empty_str=" [ ]"; 
       fi
-		  EMPTY1="                      "
-		  EMPTY2="                     "
-		  OUTPUT_OPTION_L="${MENU_OPTIONS[$L_OPT_INDEX]:-None}" ;
-		  $e "${empty_str}${EMPTY1:$(( ${#OUTPUT_OPTION_L} / 2 ))} ${OUTPUT_OPTION_L} ${EMPTY2:$(( ${#OUTPUT_OPTION_L} / 2 ))}";
+          EMPTY1="                      "
+          EMPTY2="                     "
+          OUTPUT_OPTION_L="${MENU_OPTIONS[$L_OPT_INDEX]:-None}" ;
+          $e "${empty_str}${EMPTY1:$(( ${#OUTPUT_OPTION_L} / 2 ))} ${OUTPUT_OPTION_L} ${EMPTY2:$(( ${#OUTPUT_OPTION_L} / 2 ))}";
     else
-		  EMPTY1="                        "
-		  EMPTY2="                       "
-		  OUTPUT_OPTION_L="${MENU_OPTIONS[$L_OPT_INDEX]:-None}" ;
-		  $e "${EMPTY1:$(( ${#OUTPUT_OPTION_L} / 2 ))} ${OUTPUT_OPTION_L} ${EMPTY2:$(( ${#OUTPUT_OPTION_L} / 2 ))}";
+          EMPTY1="                        "
+          EMPTY2="                       "
+          OUTPUT_OPTION_L="${MENU_OPTIONS[$L_OPT_INDEX]:-None}" ;
+          $e "${EMPTY1:$(( ${#OUTPUT_OPTION_L} / 2 ))} ${OUTPUT_OPTION_L} ${EMPTY2:$(( ${#OUTPUT_OPTION_L} / 2 ))}";
     fi
-		#$e "${MENU_OPTIONS[$1]:-None}" ; 
+        #$e "${MENU_OPTIONS[$1]:-None}" ; 
 }
 LM=6    #Last Menu number
 MENUN(){ 
-	N_L=0
-	while [ $N_L -le $LM ] ; do
-		MN ${N_L}
-		N_L=$(( $N_L + 1 ))
-	done
+    N_L=0
+    while [ $N_L -le $LM ] ; do
+        MN ${N_L}
+        N_L=$(( $N_L + 1 ))
+    done
 }
 INITN(){ BLUE;HEAD;FOOT;MENUN;}
 SC(){ REFRESH;MARK;$S;cur=`ARROW`;}
 ESN(){ MARK;$e "\nENTER = main menu ";$b;read;INITN;}
 COUNT_LM() {
-	LM=0
-	while [[ "${MENU_OPTIONS[$LM]}" != "" ]] ; do
-		LM=$(( $LM + 1 ))
-	done
-	if test "$LM" != "0" ; then 
-		LM=$(( $LM - 1 ))
-	fi
+    LM=0
+    while [[ "${MENU_OPTIONS[$LM]}" != "" ]] ; do
+        LM=$(( $LM + 1 ))
+    done
+    if test "$LM" != "0" ; then 
+        LM=$(( $LM - 1 ))
+    fi
 }
 
 adjust_show_region()
@@ -159,8 +162,10 @@ collect_multi_select_index()
     N=0
     N_INDEX=0
     for option in ${MENU_OPTIONS[@]} ; do
+      MENU_SELECTED[$N]=false
       if test "${M_SELECTED[$N]}" = "true" ; then
         M_SELECTED_INDEX[$N_INDEX]=$N
+        MENU_SELECTED[$N]=true
         (( N_INDEX++ ))
       fi
       (( N++ ))
@@ -170,34 +175,34 @@ collect_multi_select_index()
 
 # more than two options will be handled correctly
 show_menu() {
-	i=0
+    i=0
   CURRENT_LANE=0
-  M_SELECTED=()
+  if test "$M_IS_INIT" != "false" ; then  M_SELECTED=() ; fi
   MAX_LINES=`tput lines`
-	COUNT_LM
+    COUNT_LM
   adjust_show_region
-	INITN
-	while [[ "$O" != " " ]] ; do
-		S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); collect_multi_select_index; return $ret_l;fi
-		POSITION
-	done
+    INITN
+    while [[ "$O" != " " ]] ; do
+        S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); collect_multi_select_index; return $ret_l;fi
+        POSITION
+    done
 }
 
 # more than two options will be handled correctly
 show_menu_quit() {
-	i=0
+    i=0
   CURRENT_LANE=0
-  M_SELECTED=()
+  if test "$M_IS_INIT" != "false" ; then  M_SELECTED=() ; fi
   MAX_LINES=`tput lines`
-	COUNT_LM
-	LM=$(( $LM + 1 ))
-	MENU_OPTIONS[$LM]="exit"
+    COUNT_LM
+    LM=$(( $LM + 1 ))
+    MENU_OPTIONS[$LM]="exit"
   adjust_show_region
-	INITN
-	while [[ "$O" != " " ]] ; do
-		S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); if [[ "$ret_l" = "$LM" ]] ; then exit 0; fi; collect_multi_select_index ; return $ret_l;fi
-		POSITION
-	done
+    INITN
+    while [[ "$O" != " " ]] ; do
+        S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); if [[ "$ret_l" = "$LM" ]] ; then exit 0; fi; collect_multi_select_index ; return $ret_l;fi
+        POSITION
+    done
 }
 
 
