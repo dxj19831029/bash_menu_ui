@@ -15,6 +15,7 @@ SHOW_LINES=MAX_LINES
 TOTAL_LINES=0
 IS_DEBUG=${DEBUG:-no}
 IS_MULTI_SELECT=false
+IS_TITLE_SHOWN_TOTAL_NUM=false
 
 
 #### modified based on http://top-scripts.blogspot.com/2011/01/blog-post.html
@@ -37,9 +38,13 @@ HEAD(){
     printf "total: $TOTAL_LINES show: $SHOW_LINES LM: $LM i: $i current top: $CURRENT_LANE l opt index: $L_OPT_INDEX"
   fi
     MARK;TPUT $TOP_LANE 4
+    L_TITLE="${TITLE}"
+    if test "$IS_TITLE_SHOWN_TOTAL_NUM" = "true" ; then
+	L_TITLE="${TITLE}($(( ${TOTAL_LINES} + 1)))"
+    fi
     EMPTY1="                         "
     EMPTY2="                         "
-    $E "`printf "%s %s %s" "${EMPTY1:$(( ${#TITLE} / 2 ))}" "$TITLE" "${EMPTY2:$(( ${#TITLE} / 2 ))}"`";UNMARK
+    $E "`printf "%s %s %s" "${EMPTY1:$(( ${#L_TITLE} / 2 ))}" "$L_TITLE" "${EMPTY2:$(( ${#L_TITLE} / 2 ))}"`";UNMARK
     DRAW
     for each in $(seq 1 $TOTAL_BORDER);do
         $E "   x                                                  x"
@@ -220,6 +225,7 @@ TITLE="multiple selection"
 show_menu
 echo "selection: $?"
 
+IS_TITLE_SHOWN_TOTAL_NUM=true
 IS_MULTI_SELECT=false
 MENU_OPTIONS=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 )
 TITLE="with quit test"
