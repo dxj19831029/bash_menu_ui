@@ -200,7 +200,7 @@ show_menu_quit() {
   adjust_show_region
     INITN
     while [[ "$O" != " " ]] ; do
-        S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); if [[ "$ret_l" = "$LM" ]] ; then exit 0; fi; collect_multi_select_index ; return $ret_l;fi
+        S="MN $i" ; SC; if [[ $cur = "" ]]; then C; TPUT 1 1 ; ret_l=$(( $CURRENT_LANE + $i )); if [[ "$ret_l" = "$TOTAL_LINES" ]] ; then exit 0; fi; collect_multi_select_index ; return $ret_l;fi
         POSITION
     done
 }
@@ -218,6 +218,12 @@ echo "selection: $?"
 MENU_OPTIONS=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 )
 TITLE="multiple selection"
 show_menu
+echo "selection: $?"
+
+IS_MULTI_SELECT=false
+MENU_OPTIONS=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 )
+TITLE="with quit test"
+show_menu_quit
 echo "selection: $?"
 
 IS_MULTI_SELECT=true
