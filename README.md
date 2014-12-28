@@ -2,11 +2,11 @@ example is inside script
 
 screenshots:
 
-![exit selection](quit.jpg "exit selection")
+![exit selection](screenshots/quit.jpg "exit selection")
 
-![single selection](single_selection.png "single selection")
+![single selection](screenshots/single_selection.png "single selection")
 
 ![long selection](screenshots/long_selection.jpg "long selection list")
 
-![multiple selection](multiple_selection.jpg "multiple selection")
+![multiple selection](screenshots/multiple_selection.jpg "multiple selection")
 
