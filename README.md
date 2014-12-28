@@ -10,3 +10,4 @@ screenshots:
 
 ![multiple selection](screenshots/multiple_selection.jpg "multiple selection")
 
+![multiple selection](screenshots/section_checker.jpg "multiple selection")
