@@ -5,6 +5,11 @@ COLOR_MODE=${COLOR_MODE:-"console"}
 SC_MSG_WIDTH=${SC_MSG_WIDTH:-`tput cols`}
 SC_SECTION_CH=${SC_SECTION_CH:-+}
 SC_SUB_CHECK_CH=${SC_SUB_CHECK_CH:--}
+SC_SUCC_MSG=${SC_SUCC_MSG:-success}
+SC_FAIL_MSG=${SC_FAIL_MSG:-failed}
+SC_SEC_BEGIN_MSG=${SC_SEC_BEGIN_MSG:-"Start to check"}
+SC_SEC_CHECK_MSG=${SC_SEC_CHECK_MSG:-"checking"}
+SC_SEC_PRINT_END=${SC_SEC_PRINT_END:-"true"}
 
 if test "$COLOR_MODE" = "console" ; then
   sc_succ_color="tput setaf 2"
@@ -49,8 +54,8 @@ sc_line_mid() {
   printf "%s%s%s" "${line:0:$(( (${#line} - ${#msg})/2 ))}" "${msg}" "${line:$(( (${#line} + ${#msg})/2))}"
 }
 
-section_begin_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 10 )) ' '``sc_line 10 "$SC_SECTION_CH"`
-section_end_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 10 )) ' '`
+section_begin_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '``sc_line 10 "$SC_SECTION_CH"`
+section_end_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '`
 section_end_ending_msg_2=`sc_line 10 '-'`
 
 SC_CHECK_MATH() {
@@ -62,13 +67,13 @@ SC_CHECK_MATH() {
   show_msg=""
   if test "$(( $a $op $b ))" = "0" ; then
     color="$sc_fail_color"
-    section_result="failed"
+    section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
-    section_result="success"
+    section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
     l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
@@ -77,7 +82,7 @@ SC_CHECK_MATH() {
     show_msg="${a:0:$l_sec_msg_len} $op ${b:0:${l_sec_msg_len}}"
   fi
   if test "$msg" != "" ; then
-    t_msg="${section_sub_prefix} checking $msg : $show_msg   "
+    t_msg="${section_sub_prefix} $SC_SEC_CHECK_MSG $msg : $show_msg   "
     printf "%s%s" "$t_msg" "${section_end_ending_msg:$(( ${#t_msg}+${#section_result}))}" 
     $color
     printf "%s" "$section_result"
@@ -97,13 +102,13 @@ SC_CHECK_MSG() {
   show_msg=""
   if ! test "$a" $op "$b"; then
     color="$sc_fail_color"
-    section_result="failed"
+    section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
-    section_result="success"
+    section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
     l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
@@ -113,7 +118,7 @@ SC_CHECK_MSG() {
   fi
 
   if test "$msg" != "" ; then
-    t_msg="${section_sub_prefix} checking $msg : $show_msg   "
+    t_msg="${section_sub_prefix} $SC_SEC_CHECK_MSG $msg : $show_msg   "
     printf "%s%s" "$t_msg" "${section_end_ending_msg:$(( ${#t_msg}+${#section_result}))}"
     $color
     printf "%s" "$section_result"
@@ -134,7 +139,7 @@ SC_BEGIN_SECTION() {
   if test "$section_title" != "" ; then
     #echo "+   Start to check ${Section}:"
     #ending_msg="                                        +++++++++++++++++++++++++++"
-    msg_front="$section_prefix Start to check ${section_title}: "
+    msg_front="$section_prefix $SC_SEC_BEGIN_MSG ${section_title}: "
     printf "%s %s\n" "$msg_front" "${section_begin_ending_msg:${#msg_front}}"
   fi
   section_total=1
@@ -147,6 +152,10 @@ SC_END_SECTION() {
   section_sub=$(( $section_sub - 1 ))
   section_title=${section_titles[$section_sub]}
 
+  if ! test "$SC_SEC_PRINT_END" = "true" ; then
+	return
+  fi
+
   #empty="                                                            --------------     "
   #msg="--  ${Section} check result: "
   msg="${section_prefix}  ${section_title} check result: "
@@ -154,10 +163,10 @@ SC_END_SECTION() {
   color=""
   if test "$section_total" = "0" ; then
     color="$sc_fail_color"
-    result="failed"
+    result="$SC_FAIL_MSG"
   else
     color="$sc_succ_color"
-    result="success"
+    result="$SC_SUCC_MSG"
   fi
   #printf "%s %s " "$msg" "${section_end_ending_msg:$(( ${#msg} + ${#result} )) }" 
   #printf "%s %s " "$msg" "${section_end_ending_msg:${#msg}}" 
@@ -193,11 +202,11 @@ SC_FINAL_SUMMARY() {
   printf "\n"
   final_line="=`sc_line $(( $SC_MSG_WIDTH - 2 )) ' '`="
   echo "$final_line"
-  failed_msg="total failed: ${section_global_fail_result}"
+  failed_msg="total $SC_FAIL_MSG: ${section_global_fail_result}"
   #printf "%s%s%s" "${final_line:0:$(( (${#final_line} - ${#failed_msg})/2 )) }" "${failed_msg}" "${final_line:$(( (${#final_line} + ${#failed_msg})/2))}"
   sc_line_mid "$final_line" "$failed_msg"
   echo ""
-  success_msg="total success: ${section_global_success_result}"
+  success_msg="total $SC_SUCC_MSG: ${section_global_success_result}"
   sc_line_mid "$final_line" "$success_msg"
   echo ""
   echo "$final_line"
