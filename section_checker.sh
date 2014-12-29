@@ -180,9 +180,23 @@ SC_BEGIN_SECTION() {
     msg_front="$section_prefix $SC_SEC_BEGIN_MSG ${section_title}: "
     printf "%s %s\n" "$msg_front" "${section_begin_ending_msg:${#msg_front}}"
   fi
-  section_total=1
+  if test "$section_sub" = "1" ; then
+    section_total=1
+  fi
 }
 
+SC_CHECK_FAIL_END_SECTION() {
+  msg=$1
+  if test "$section_total" = "0" ; then
+    # there is failed checking, and we can not continue
+    $sc_fail_color
+    SC_MSG "$msg"
+    $sc_clear_color
+    SC_END_SECTION
+    exit 1
+  fi
+  return 0
+}
 
 SC_END_SECTION() {
   #empty="                                                                     "
