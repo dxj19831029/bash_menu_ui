@@ -21,8 +21,13 @@ SC_CHECK_MATH "10.51" ">" "10.50" "float"
 SC_CHECK_MATH "10.51" "==" "10.50" "float" 
 SC_CHECK_MATH "100000000000000000000000000" "<" "5" "free too long" 
 SC_CHECK_MATH "100000000000000000000000000" ">" "5" "free too long" 
+SC_MSG "this is msg line3"
 SC_END_SECTION
 SC_CHECK_MATH "30" "==" "30" "delay lag"
+SC_MSG "this is msg line"
+SC_MSG "this is msg line2"
+SC_MSG "this is msg lineggggggggggggggggggggggaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccc"
+
 SC_END_SECTION
 SC_BEGIN_SECTION "Section 2"
 SC_CHECK_MSG "welcomewelcomewelcomewelcome" "=" "welcomewelcomewelcomewelcome" "msg too long"

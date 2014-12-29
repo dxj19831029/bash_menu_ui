@@ -35,7 +35,7 @@ if test "$SC_EXPORT" = "1" ; then
   export section_prefix=${section_prefix:-''}
   export section_sub_prefix=${section_sub_prefix:-''}
   export section_titles=${section_titles:-("None")}
-  export section_check_msg_length=${section_check_msg_length:-$(( ($SC_MSG_WIDTH - 30)/2))}
+  export section_check_msg_length=${section_check_msg_length:-$(( $SC_MSG_WIDTH - 22))}
 else
   section_title=${section_title:-"None"}
   section_result=${section_result:-"failed"}
@@ -46,7 +46,7 @@ else
   section_prefix=${section_prefix:-''}
   section_sub_prefix=${section_sub_prefix:-''}
   section_titles=${section_titles:-("None")}
-  section_check_msg_length=${section_check_msg_length:-$(( ($SC_MSG_WIDTH - 30)/2))}
+  section_check_msg_length=${section_check_msg_length:-$(( $SC_MSG_WIDTH - 22))}
 fi
 
 #call_sub_scripts() {
@@ -75,6 +75,17 @@ section_begin_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '``sc_line 10 "$SC
 section_end_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '`
 section_end_ending_msg_2=`sc_line 10 '-'`
 
+sc_dot_msg() {
+  msg=$1
+  len=$2
+  if test "$(( $len <= 3 ))" = "1" ; then
+    echo "..."
+    return 0
+  fi
+  dot_len=$(( ${#msg} - $len > 0 ? 3 : 0 ))
+  echo "${msg:0:$(($len-$dot_len))}`sc_line $dot_len '.'`"
+}
+
 SC_CHECK_MATH() {
   a=$1
   op=$2
@@ -93,16 +104,12 @@ SC_CHECK_MATH() {
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
-    l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
+    l_sec_msg_len=$(( (${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 - ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    a_cut_len=$(( ${#a} - $l_sec_msg_len ))
-    a_dot_len=$(( $a_cut_len > 0 ? 3 : 0 ))
-    b_cut_len=$(( ${#b} - $l_sec_msg_len ))
-    b_dot_len=$(( $b_cut_len > 0 ? 3 : 0 ))
 
-    show_msg="${a:0:$(( $l_sec_msg_len - $a_dot_len))}`sc_line $a_dot_len '.'` $op ${b:0:$(( ${l_sec_msg_len} - $b_dot_len))}`sc_line $b_dot_len '.'`"
+    show_msg="`sc_dot_msg "$a" ${l_sec_msg_len}` $op `sc_dot_msg "$b" ${l_sec_msg_len}`"
   fi
   if test "$msg" != "" ; then
     t_msg="${section_sub_prefix} $SC_SEC_CHECK_MSG $msg : $show_msg   "
@@ -116,19 +123,11 @@ SC_CHECK_MATH() {
   fi
 }
 
-sc_dot_msg() {
-  msg=$1
-  len=$2
-  dot_len=$(( ${#msg} - $len > 0 ? 3 : 0 ))
-  echo "${msg:0:$(($len-$dot_len))}`sc_line $dot_len '.'`"
-}
-
 SC_MSG() {
   msg=$1
   l_sec_msg_len=$(( ${SC_MSG_WIDTH} - ${#section_sub_prefix} - 25 ))
   show_msg=`sc_dot_msg "$msg" "$l_sec_msg_len"`
   t_msg="${section_sub_prefix} $show_msg"
-  #printf "%s%s\n" "$t_msg" "${section_end_ending_msg:$(( ${#t_msg}+${#section_result}))}"
   echo "$t_msg"
 }
 
@@ -149,16 +148,11 @@ SC_CHECK_MSG() {
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
-    l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
+    l_sec_msg_len=$(( ( ${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 -  ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    a_cut_len=$(( ${#a} - $l_sec_msg_len ))
-    a_dot_len=$(( $a_cut_len > 0 ? 3 : 0 ))
-    b_cut_len=$(( ${#b} - $l_sec_msg_len ))
-    b_dot_len=$(( $b_cut_len > 0 ? 3 : 0 ))
-
-    show_msg="${a:0:$(( $l_sec_msg_len - $a_dot_len))}`sc_line $a_dot_len '.'` $op ${b:0:$(( ${l_sec_msg_len} - $b_dot_len))}`sc_line $b_dot_len '.'`"
+    show_msg="`sc_dot_msg "$a" ${l_sec_msg_len}` $op `sc_dot_msg "$b" ${l_sec_msg_len}`"
   fi
 
   if test "$msg" != "" ; then
