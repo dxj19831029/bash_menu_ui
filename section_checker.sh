@@ -82,7 +82,8 @@ SC_CHECK_MATH() {
   msg=$4
   color=""
   show_msg=""
-  if test "$(( $a $op $b ))" = "0" ; then
+  cmp=`awk -v n1=$a -v n2=$b "BEGIN{ if (n1${op}n2) exit 1; exit 0}" ; echo $?`
+  if test "$cmp" = "0" ; then
     color="$sc_fail_color"
     section_result="$SC_FAIL_MSG"
     section_total=0
