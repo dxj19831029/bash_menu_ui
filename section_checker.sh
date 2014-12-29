@@ -11,6 +11,18 @@ SC_SEC_BEGIN_MSG=${SC_SEC_BEGIN_MSG:-"Start to check"}
 SC_SEC_CHECK_MSG=${SC_SEC_CHECK_MSG:-"checking"}
 SC_SEC_PRINT_END=${SC_SEC_PRINT_END:-"true"}
 SC_EXPORT=${SC_EXPORT:-""}
+SC_EXPORT_FILE=${SC_EXPORT_FILE:-sc_subscript_ser}
+
+control_c()
+# run if user hits control-c
+{
+  rm -f $SC_EXPORT_FILE
+  exit 1
+}
+ 
+# trap keyboard interrupt (control-c)
+trap control_c SIGINT
+
 
 if test "$COLOR_MODE" = "console" ; then
   sc_succ_color="tput setaf 2"
@@ -49,9 +61,27 @@ else
   section_check_msg_length=${section_check_msg_length:-$(( $SC_MSG_WIDTH - 22))}
 fi
 
-#call_sub_scripts() {
-  #export section_
-#}
+SC_DESERIALIZE_COUNTING(){
+  if test "$SC_EXPORT" = "1" ; then
+    section_total=`grep section_total "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    section_global_fail_result=`grep section_global_fail_result "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    section_global_success_result=`grep section_global_success_result "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    rm -f "$SC_EXPORT_FILE"
+  fi
+}
+
+SC_CALL_SUB_SCRIPT() {
+  $1
+  SC_DESERIALIZE_COUNTING
+}
+
+serialize_counting() {
+  if test "$SC_EXPORT" = "1" ; then
+    echo "section_total=$section_total" > "$SC_EXPORT_FILE"
+    echo "section_global_fail_result=$section_global_fail_result" >> "$SC_EXPORT_FILE"
+    echo "section_global_success_result=$section_global_success_result" >> "$SC_EXPORT_FILE"
+  fi
+}
 
 
 sc_line() {
@@ -99,11 +129,13 @@ SC_CHECK_MATH() {
     section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
+    serialize_counting
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
+    serialize_counting
     l_sec_msg_len=$(( (${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 - ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
@@ -143,11 +175,13 @@ SC_CHECK_MSG() {
     section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
+    serialize_counting
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
+    serialize_counting
     l_sec_msg_len=$(( ( ${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 -  ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
@@ -182,6 +216,7 @@ SC_BEGIN_SECTION() {
   fi
   if test "$section_sub" = "1" ; then
     section_total=1
+    serialize_counting
   fi
 }
 
