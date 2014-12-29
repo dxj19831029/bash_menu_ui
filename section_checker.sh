@@ -116,6 +116,22 @@ SC_CHECK_MATH() {
   fi
 }
 
+sc_dot_msg() {
+  msg=$1
+  len=$2
+  dot_len=$(( ${#msg} - $len > 0 ? 3 : 0 ))
+  echo "${msg:0:$(($len-$dot_len))}`sc_line $dot_len '.'`"
+}
+
+SC_MSG() {
+  msg=$1
+  l_sec_msg_len=$(( ${SC_MSG_WIDTH} - ${#section_sub_prefix} - 25 ))
+  show_msg=`sc_dot_msg "$msg" "$l_sec_msg_len"`
+  t_msg="${section_sub_prefix} $show_msg"
+  #printf "%s%s\n" "$t_msg" "${section_end_ending_msg:$(( ${#t_msg}+${#section_result}))}"
+  echo "$t_msg"
+}
+
 SC_CHECK_MSG() {
   a=$1
   op=$2
