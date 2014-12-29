@@ -10,6 +10,7 @@ SC_FAIL_MSG=${SC_FAIL_MSG:-failed}
 SC_SEC_BEGIN_MSG=${SC_SEC_BEGIN_MSG:-"Start to check"}
 SC_SEC_CHECK_MSG=${SC_SEC_CHECK_MSG:-"checking"}
 SC_SEC_PRINT_END=${SC_SEC_PRINT_END:-"true"}
+SC_EXPORT=${SC_EXPORT:-""}
 
 if test "$COLOR_MODE" = "console" ; then
   sc_succ_color="tput setaf 2"
@@ -24,17 +25,33 @@ else
   sc_fail_color=
   sc_lear_color=
 fi
+if test "$SC_EXPORT" = "1" ; then
+  export section_title=${section_title:-"None"}
+  export section_result=${section_result:-"failed"}
+  export section_total=${section_total:-1}
+  export section_global_fail_result=${section_global_fail_result:-0}
+  export section_global_success_result=${section_global_success_result:-0}
+  export section_sub=${section_sub:-0}
+  export section_prefix=${section_prefix:-''}
+  export section_sub_prefix=${section_sub_prefix:-''}
+  export section_titles=${section_titles:-("None")}
+  export section_check_msg_length=${section_check_msg_length:-$(( ($SC_MSG_WIDTH - 30)/2))}
+else
+  section_title=${section_title:-"None"}
+  section_result=${section_result:-"failed"}
+  section_total=${section_total:-1}
+  section_global_fail_result=${section_global_fail_result:-0}
+  section_global_success_result=${section_global_success_result:-0}
+  section_sub=${section_sub:-0}
+  section_prefix=${section_prefix:-''}
+  section_sub_prefix=${section_sub_prefix:-''}
+  section_titles=${section_titles:-("None")}
+  section_check_msg_length=${section_check_msg_length:-$(( ($SC_MSG_WIDTH - 30)/2))}
+fi
 
-section_title="None"
-section_result="failed"
-section_total=1
-section_global_fail_result=0
-section_global_success_result=0
-section_sub=0
-section_prefix=""
-section_sub_prefix=""
-section_titles=("None")
-section_check_msg_length=$(( ($SC_MSG_WIDTH - 30)/2))
+#call_sub_scripts() {
+  #export section_
+#}
 
 
 sc_line() {
