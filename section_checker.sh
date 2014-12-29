@@ -97,7 +97,12 @@ SC_CHECK_MATH() {
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    show_msg="${a:0:$l_sec_msg_len} $op ${b:0:${l_sec_msg_len}}"
+    a_cut_len=$(( ${#a} - $l_sec_msg_len ))
+    a_dot_len=$(( $a_cut_len > 0 ? 3 : 0 ))
+    b_cut_len=$(( ${#b} - $l_sec_msg_len ))
+    b_dot_len=$(( $b_cut_len > 0 ? 3 : 0 ))
+
+    show_msg="${a:0:$(( $l_sec_msg_len - $a_dot_len))}`sc_line $a_dot_len '.'` $op ${b:0:$(( ${l_sec_msg_len} - $b_dot_len))}`sc_line $b_dot_len '.'`"
   fi
   if test "$msg" != "" ; then
     t_msg="${section_sub_prefix} $SC_SEC_CHECK_MSG $msg : $show_msg   "
@@ -132,7 +137,12 @@ SC_CHECK_MSG() {
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    show_msg="${a:0:${l_sec_msg_len}} $op ${b:0:${l_sec_msg_len}}"
+    a_cut_len=$(( ${#a} - $l_sec_msg_len ))
+    a_dot_len=$(( $a_cut_len > 0 ? 3 : 0 ))
+    b_cut_len=$(( ${#b} - $l_sec_msg_len ))
+    b_dot_len=$(( $b_cut_len > 0 ? 3 : 0 ))
+
+    show_msg="${a:0:$(( $l_sec_msg_len - $a_dot_len))}`sc_line $a_dot_len '.'` $op ${b:0:$(( ${l_sec_msg_len} - $b_dot_len))}`sc_line $b_dot_len '.'`"
   fi
 
   if test "$msg" != "" ; then
