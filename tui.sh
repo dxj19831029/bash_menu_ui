@@ -16,6 +16,7 @@ TOTAL_LINES=0
 IS_DEBUG=${DEBUG:-no}
 IS_MULTI_SELECT=false
 IS_TITLE_SHOWN_TOTAL_NUM=false
+IS_TUI_CLEAR_INIT=${IS_TUI_CLEAR_INIT:-true}
 
 
 #### modified based on http://top-scripts.blogspot.com/2011/01/blog-post.html
@@ -49,7 +50,6 @@ HEAD(){
     for each in $(seq 1 $TOTAL_BORDER);do
         $E "   x                                                  x"
     done;WRITE;}
-i=0; CLEAR; CIVIS;NULL=/dev/null
 FOOT(){ MARK;end_foot=$(( $LM + 4 + $TOP_LANE )) ; TPUT $end_foot 4
   if test "$IS_MULTI_SELECT" != "false" ; then
       printf " ENTER=FINISH, UP/DN=NEXT OPTION, S=select/deselect ";UNMARK;
@@ -210,3 +210,6 @@ show_menu_quit() {
     done
 }
 
+if test "$IS_TUI_CLEAR_INIT" = "true" ; then
+	C
+fi
