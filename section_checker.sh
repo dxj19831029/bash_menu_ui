@@ -10,6 +10,19 @@ SC_FAIL_MSG=${SC_FAIL_MSG:-failed}
 SC_SEC_BEGIN_MSG=${SC_SEC_BEGIN_MSG:-"Start to check"}
 SC_SEC_CHECK_MSG=${SC_SEC_CHECK_MSG:-"checking"}
 SC_SEC_PRINT_END=${SC_SEC_PRINT_END:-"true"}
+SC_EXPORT=${SC_EXPORT:-""}
+SC_EXPORT_FILE=${SC_EXPORT_FILE:-sc_subscript_ser}
+
+control_c()
+# run if user hits control-c
+{
+  rm -f $SC_EXPORT_FILE
+  exit 1
+}
+ 
+# trap keyboard interrupt (control-c)
+trap control_c SIGINT
+
 
 if test "$COLOR_MODE" = "console" ; then
   sc_succ_color="tput setaf 2"
@@ -24,17 +37,51 @@ else
   sc_fail_color=
   sc_lear_color=
 fi
+if test "$SC_EXPORT" = "1" ; then
+  export section_title=${section_title:-"None"}
+  export section_result=${section_result:-"failed"}
+  export section_total=${section_total:-1}
+  export section_global_fail_result=${section_global_fail_result:-0}
+  export section_global_success_result=${section_global_success_result:-0}
+  export section_sub=${section_sub:-0}
+  export section_prefix=${section_prefix:-''}
+  export section_sub_prefix=${section_sub_prefix:-''}
+  export section_titles=${section_titles:-("None")}
+  export section_check_msg_length=${section_check_msg_length:-$(( $SC_MSG_WIDTH - 22))}
+else
+  section_title=${section_title:-"None"}
+  section_result=${section_result:-"failed"}
+  section_total=${section_total:-1}
+  section_global_fail_result=${section_global_fail_result:-0}
+  section_global_success_result=${section_global_success_result:-0}
+  section_sub=${section_sub:-0}
+  section_prefix=${section_prefix:-''}
+  section_sub_prefix=${section_sub_prefix:-''}
+  section_titles=${section_titles:-("None")}
+  section_check_msg_length=${section_check_msg_length:-$(( $SC_MSG_WIDTH - 22))}
+fi
 
-section_title="None"
-section_result="failed"
-section_total=1
-section_global_fail_result=0
-section_global_success_result=0
-section_sub=0
-section_prefix=""
-section_sub_prefix=""
-section_titles=("None")
-section_check_msg_length=$(( ($SC_MSG_WIDTH - 30)/2))
+SC_DESERIALIZE_COUNTING(){
+  if test "$SC_EXPORT" = "1" ; then
+    section_total=`grep section_total "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    section_global_fail_result=`grep section_global_fail_result "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    section_global_success_result=`grep section_global_success_result "$SC_EXPORT_FILE" 2>/dev/null | awk -F'=' '{print $2}'`
+    rm -f "$SC_EXPORT_FILE"
+  fi
+}
+
+SC_CALL_SUB_SCRIPT() {
+  $1
+  SC_DESERIALIZE_COUNTING
+}
+
+serialize_counting() {
+  if test "$SC_EXPORT" = "1" ; then
+    echo "section_total=$section_total" > "$SC_EXPORT_FILE"
+    echo "section_global_fail_result=$section_global_fail_result" >> "$SC_EXPORT_FILE"
+    echo "section_global_success_result=$section_global_success_result" >> "$SC_EXPORT_FILE"
+  fi
+}
 
 
 sc_line() {
@@ -58,6 +105,17 @@ section_begin_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '``sc_line 10 "$SC
 section_end_ending_msg=`sc_line $(( $SC_MSG_WIDTH - 11 )) ' '`
 section_end_ending_msg_2=`sc_line 10 '-'`
 
+sc_dot_msg() {
+  msg=$1
+  len=$2
+  if test "$(( $len <= 3 ))" = "1" ; then
+    echo "..."
+    return 0
+  fi
+  dot_len=$(( ${#msg} - $len > 0 ? 3 : 0 ))
+  echo "${msg:0:$(($len-$dot_len))}`sc_line $dot_len '.'`"
+}
+
 SC_CHECK_MATH() {
   a=$1
   op=$2
@@ -65,21 +123,25 @@ SC_CHECK_MATH() {
   msg=$4
   color=""
   show_msg=""
-  if test "$(( $a $op $b ))" = "0" ; then
+  cmp=`awk -v n1=$a -v n2=$b "BEGIN{ if (n1${op}n2) exit 1; exit 0}" ; echo $?`
+  if test "$cmp" = "0" ; then
     color="$sc_fail_color"
     section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
+    serialize_counting
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
-    l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
+    serialize_counting
+    l_sec_msg_len=$(( (${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 - ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    show_msg="${a:0:$l_sec_msg_len} $op ${b:0:${l_sec_msg_len}}"
+
+    show_msg="`sc_dot_msg "$a" ${l_sec_msg_len}` $op `sc_dot_msg "$b" ${l_sec_msg_len}`"
   fi
   if test "$msg" != "" ; then
     t_msg="${section_sub_prefix} $SC_SEC_CHECK_MSG $msg : $show_msg   "
@@ -91,6 +153,14 @@ SC_CHECK_MATH() {
     fi
     printf "\n"
   fi
+}
+
+SC_MSG() {
+  msg=$1
+  l_sec_msg_len=$(( ${SC_MSG_WIDTH} - ${#section_sub_prefix} - 25 ))
+  show_msg=`sc_dot_msg "$msg" "$l_sec_msg_len"`
+  t_msg="${section_sub_prefix} $show_msg"
+  echo "$t_msg"
 }
 
 SC_CHECK_MSG() {
@@ -105,16 +175,18 @@ SC_CHECK_MSG() {
     section_result="$SC_FAIL_MSG"
     section_total=0
     section_global_fail_result=$(( $section_global_fail_result + 1 ))
+    serialize_counting
     show_msg="$a $op $b"
   else
     color="$sc_succ_color"
     section_result="$SC_SUCC_MSG"
     section_global_success_result=$(( $section_global_success_result + 1 ))
-    l_sec_msg_len=$(( ${section_check_msg_length} - (11 + ${#msg})/2))
+    serialize_counting
+    l_sec_msg_len=$(( ( ${section_check_msg_length} - ${#section_sub_prefix} - ${#SC_SEC_CHECK_MSG} - 10 -  ${#msg})/2))
     if test "$(( $l_sec_msg_len < 1 ))" = "1" ; then
       l_sec_msg_len=1
     fi
-    show_msg="${a:0:${l_sec_msg_len}} $op ${b:0:${l_sec_msg_len}}"
+    show_msg="`sc_dot_msg "$a" ${l_sec_msg_len}` $op `sc_dot_msg "$b" ${l_sec_msg_len}`"
   fi
 
   if test "$msg" != "" ; then
@@ -142,9 +214,24 @@ SC_BEGIN_SECTION() {
     msg_front="$section_prefix $SC_SEC_BEGIN_MSG ${section_title}: "
     printf "%s %s\n" "$msg_front" "${section_begin_ending_msg:${#msg_front}}"
   fi
-  section_total=1
+  if test "$section_sub" = "1" ; then
+    section_total=1
+    serialize_counting
+  fi
 }
 
+SC_CHECK_FAIL_END_SECTION() {
+  msg=$1
+  if test "$section_total" = "0" ; then
+    # there is failed checking, and we can not continue
+    $sc_fail_color
+    SC_MSG "$msg"
+    $sc_clear_color
+    SC_END_SECTION
+    exit 1
+  fi
+  return 0
+}
 
 SC_END_SECTION() {
   #empty="                                                                     "
