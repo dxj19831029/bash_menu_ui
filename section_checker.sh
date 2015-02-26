@@ -2,7 +2,7 @@
 
 # color mode: three: console/html/none
 COLOR_MODE=${COLOR_MODE:-"console"}
-SC_MSG_WIDTH=${SC_MSG_WIDTH:-`tput cols`}
+export SC_MSG_WIDTH=${SC_MSG_WIDTH:-`tput cols`}
 SC_SECTION_CH=${SC_SECTION_CH:-+}
 SC_SUB_CHECK_CH=${SC_SUB_CHECK_CH:--}
 SC_SUCC_MSG=${SC_SUCC_MSG:-success}
@@ -27,14 +27,17 @@ trap control_c SIGINT
 if test "$COLOR_MODE" = "console" ; then
   sc_succ_color="tput setaf 2"
   sc_fail_color="tput setaf 1"
+  sc_warn_color="tput setaf 3"
   sc_clear_color="tput sgr0"
 elif test "$Color_mode" = "html" ; then
   sc_succ_color="printf %s <font color='green' >"
   sc_fail_color="printf %s <font color='red' >"
+  sc_warn_color="printf %s <font color='yellow' >"
   sc_clear_color="printf %s </font>"
 else
   sc_succ_color=
   sc_fail_color=
+  sc_warn_color=
   sc_lear_color=
 fi
 if test "$SC_EXPORT" = "1" ; then
@@ -163,6 +166,27 @@ SC_MSG() {
   echo "$t_msg"
 }
 
+SC_WARN_MSG() {
+  msg=$1
+  l_sec_msg_len=$(( ${SC_MSG_WIDTH} - ${#section_sub_prefix} - 25 ))
+  show_msg=`sc_dot_msg "$msg" "$l_sec_msg_len"`
+  t_msg="${section_sub_prefix} $show_msg"
+  $sc_warn_color
+  echo "$t_msg"
+  $sc_clear_color
+}
+
+
+SC_ERR_MSG() {
+  msg=$1
+  l_sec_msg_len=$(( ${SC_MSG_WIDTH} - ${#section_sub_prefix} - 25 ))
+  show_msg=`sc_dot_msg "$msg" "$l_sec_msg_len"`
+  t_msg="${section_sub_prefix} $show_msg"
+  $sc_fail_color
+  echo "$t_msg"
+  $sc_clear_color
+}
+
 SC_CHECK_MSG() {
   a=$1
   op=$2
@@ -237,6 +261,7 @@ SC_END_SECTION() {
   #empty="                                                                     "
   section_prefix="`sc_line $(( $section_sub - 1 )) ' '`-- "
   section_sub=$(( $section_sub - 1 ))
+  section_sub_prefix="`sc_line ${section_sub} '  '`${SC_SUB_CHECK_CH} "
   section_title=${section_titles[$section_sub]}
 
   if ! test "$SC_SEC_PRINT_END" = "true" ; then
